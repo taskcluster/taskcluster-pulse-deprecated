@@ -10,7 +10,7 @@ var DEFAULT_CONFIG_VALUES = {
     // deployment which will use `taskcluster-pulse`
     queueName:                      'taskcluster-pulse-test',
 
-    // Branches from which task-graphs should be posted
+    // Branches from which task-graphs should be posted, space separated list
     branches:                       "try",
 
     // Send an email to owner on push, as string either 'true' or 'false'

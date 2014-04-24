@@ -9,35 +9,37 @@ var scheduler       = require('taskcluster-client').scheduler;
 var config          = require('./config');
 config.load();
 
+var branches = nconf.get('pulse:branches').split(' ');
+
 /** Handle message */
 var handleMessage = function(msg) {
   if(msg._meta && msg.payload && msg.payload.change) {
     var meta    = msg._meta;
     var change  = msg.payload.change;
-    if (change.branch == 'try') {
-      debug("Revision %s was pushed to 'try' by %s",
-            change.revision, change.who);
+    if (branches.indexOf(change.branch) !== -1) {
+      debug("Revision %s was pushed to '%s' by %s",
+            change.revision, change.branch, change.who);
 
-      // Parameters for 'try'
+      // Parameters
       var params = {
-        reason:       "try-push",
+        reason:       "push",
         revision:     change.revision,
         repository:   'hg.mozilla.org',
-        branch:       'try',
+        branch:       change.branch,
         owner:        change.who,
         flags:        change.comments,
         created:      moment().toDate().toJSON(),
         deadline:     moment().add('hours', 24).toDate().toJSON()
       };
 
-      // Url to fetech task-graph from
-      var url = 'https://hg.mozilla.org/try/raw-file/' + change.revision +
-                '/taskgraph.yml';
+      // task-graph url
+      var url = 'https://hg.mozilla.org/' + change.branch + '/raw-file/' +
+                change.revision + '/taskgraph.yml';
 
       return request.get(url).end().then(function(res) {
         if (!res.ok) {
           throw new Error("Failed to fetch taskgraph.yml for " +
-                          change.revision + " on try");
+                          change.revision + " on " + change.branch);
         }
         return yaml.parse(res.text);
       }).then(function(taskGraph) {
@@ -57,7 +59,14 @@ var handleMessage = function(msg) {
 // Handle incoming messages
 var consumer  = pulse.createConsumer('build', nconf.get('queueName'));
 consumer.on('message', function(msg) {
-  Promise.from(handleMessage(msg)).catch(function(err) {
+  new Promise(function(accept, reject) {
+    try {
+      accept(handleMessage(msg)):
+    }
+    catch(e) {
+      reject(e);
+    }
+  }).catch(function(err) {
     debug("Error handling message, error: %s, %j", err, err, err.stack);
   });
 });
