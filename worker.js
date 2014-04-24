@@ -5,6 +5,7 @@ var debug           = require('debug')('taskcluster-pulse');
 var request         = require('superagent-promise');
 var yaml            = require('yamljs')
 var moment          = require('moment');
+var _               = require('lodash');
 var scheduler       = require('taskcluster-client').scheduler;
 var config          = require('./config');
 config.load();
@@ -27,6 +28,7 @@ var handleMessage = function(msg) {
         repository:   'hg.mozilla.org',
         branch:       change.branch,
         owner:        change.who,
+        comments:     change.comments,
         flags:        change.comments,
         created:      moment().toDate().toJSON(),
         deadline:     moment().add('hours', 24).toDate().toJSON()
@@ -37,6 +39,10 @@ var handleMessage = function(msg) {
                 change.revision + '/taskgraph.yml';
 
       return request.get(url).end().then(function(res) {
+        if (res.status === 404) {
+          throw "No taskgraph.yml available for " +
+                change.revision + " on " + change.branch;
+        }
         if (!res.ok) {
           throw new Error("Failed to fetch taskgraph.yml for " +
                           change.revision + " on " + change.branch);
@@ -57,11 +63,11 @@ var handleMessage = function(msg) {
 };
 
 // Handle incoming messages
-var consumer  = pulse.createConsumer('build', nconf.get('queueName'));
+var consumer  = pulse.createConsumer('build', nconf.get('pulse:queueName'));
 consumer.on('message', function(msg) {
   new Promise(function(accept, reject) {
     try {
-      accept(handleMessage(msg)):
+      accept(handleMessage(msg));
     }
     catch(e) {
       reject(e);
@@ -70,3 +76,5 @@ consumer.on('message', function(msg) {
     debug("Error handling message, error: %s, %j", err, err, err.stack);
   });
 });
+
+console.log("Now running with branches: %j", branches);
