@@ -1,0 +1,33 @@
+{
+  "name":     "taskcluster-pulse",
+  "version":  "0.1.0",
+  "private":  true,
+  "main":     "worker.js",
+  "scripts": {
+    "test":   "tests/runtests.sh"
+  },
+  "repository": {
+    "type":   "git",
+    "url":    "https://github.com/taskcluster/taskcluster-pulse.git"
+  },
+  "dependencies": {
+    "nconf":                            "0.6.9",
+    "promise":                          "4.0.0",
+    "lodash":                           "2.4.1",
+    "debug":                            "0.7.4",
+    "superagent":                       "~0.16.0",
+    "superagent-promise":               "0.1.0",
+    "taskcluster-client":               "0.4.0",
+    "yamljs":                           "0.1.4",
+    "pulse":                            "0.3.0",
+    "moment":                           "2.5.1",
+    "aws-sdk":                          "2.0.0-rc9",
+    "aws-sdk-promise":                  "0.0.0"
+  },
+  "devDependencies": {
+    "nodeunit":                         "0.8.6"
+  },
+  "engines": {
+    "node":                             "0.10.x"
+  }
+}
